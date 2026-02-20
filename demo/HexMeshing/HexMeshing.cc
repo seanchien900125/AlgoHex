@@ -23,12 +23,32 @@
 #include <AlgoHex/Stopwatches.hh>
 
 #include <HexHex/HexHex.hh>
+#include <HexHex/Utils/FileAccessor.hh>
 
 
 namespace AlgoHex
 {
 using Point = OpenVolumeMesh::Geometry::Vec3d;
 using TetMesh = OVM::TetrahedralGeometryKernel<Point, OVM::TetrahedralMeshTopologyKernel>;
+
+template<typename MeshT>
+static bool save_volume_mesh(const std::filesystem::path& _path, const MeshT& _mesh)
+{
+    const std::string ext = _path.extension();
+    if (ext == ".ovm") {
+        OpenVolumeMesh::IO::FileManager fm;
+        return fm.writeFile(_path, _mesh);
+    } else if (ext == ".ovmb") {
+        auto res = OpenVolumeMesh::IO::ovmb_write(_path, _mesh);
+        if (res != OVM::IO::WriteResult::Ok) {
+            std::cerr << OVM::IO::to_string(res) << std::endl;
+            return false;
+        }
+        return true;
+    }
+    std::cerr << "Unsupported file format: " << ext << std::endl;
+    return false;
+}
 
 void hexMeshing(Args &args)
 {
@@ -406,44 +426,77 @@ void extract_hexmesh(const Args &args, MeshT &tetmesh)
 {
   ScopedStopWatch sw(sw::hex_extraction);
 
-  std::cout << "\n#####Extracting hexmesh..." << std::endl;
-  auto parameters = tetmesh.template request_cell_property<std::map<OpenVolumeMesh::VertexHandle, TetMesh::PointT>>(
+  std::cout << "\n#####Extracting Hex Mesh..." << std::endl;
+
+  // Get the per cell parametrization
+  auto c_map_igm = tetmesh.template request_cell_property<std::map<OpenVolumeMesh::VertexHandle, TetMesh::PointT>>(
           "Parametrization");
-  HexEx::HexExtractor hexExtractor(tetmesh, parameters);
 
-  //save IGM
-  if (!args.igmOutFileName.empty())
-    hexExtractor.writeToFile(args.igmOutFileName);
-
-  hexExtractor.extract();
-  HexEx::HexahedralMesh hexmesh;
-  hexExtractor.getHexMesh(hexmesh, true);
-
-  std::cout << "Hexmesh cells: " << hexmesh.n_cells() << std::endl;
-  std::cout << "Hexmesh faces: " << hexmesh.n_faces() << std::endl;
-  std::cout << "Hexmesh edges: " << hexmesh.n_edges() << std::endl;
-  std::cout << "Hexmesh vertices: " << hexmesh.n_vertices() << std::endl;
-
-  auto hex_vol = hexmesh_volume(hexmesh);
-  auto tet_vol = tetmesh_volume(tetmesh);
-  std::cout << "#####Hexmesh volume / tetmesh voluem: " << hex_vol << "/" << tet_vol << " "
-                << hex_vol / tet_vol << std::endl;
-
-
-  //save hexmesh
-  if (!args.outFileName.empty())
-  {
-    OpenVolumeMesh::IO::FileManager fm;
-    fm.writeFile(args.outFileName, hexmesh);
+  // Convert per cell map to halfface prop used by HexHex
+  auto hf_igm = tetmesh.template request_halfface_property<OVM::Vec3d>("HexHex::Parametrization");
+  for (auto hf_it = tetmesh.hf_iter(); hf_it.is_valid(); ++hf_it) {
+      OVM::CH ch = tetmesh.incident_cell(*hf_it);
+      if (!ch.is_valid()) {continue;}
+      OVM::VH vh = tetmesh.halfface_opposite_vertex(*hf_it);
+      hf_igm[*hf_it] = c_map_igm[ch].at(vh);
   }
-  //save the boundary layer
-  if(!args.subHexOutFileName.empty())
+
+  // Setup HexHex Configuration
+  std::unique_ptr<HexHex::HexahedralMesh> hexmesh;
+  auto config = HexHex::Config();
+#ifdef _OPENMP
+  config.num_threads = omp_get_max_threads();
+#else
+  config.num_threads = 1;
+#endif
+  config.assert_igm_validity = true;
+  config.extract_piecewise_linear_faces = config.extract_piecewise_linear_edges = !args.piecewiseLinearOutFileName.empty();
+
+
+  // Save (unsanitized) IGM as .hexex
+  if (!args.igmOutFileName.empty()) {
+      HexHex::saveInputToHEXEX(args.igmOutFileName, tetmesh, hf_igm);
+  }
+
+  // Use HexHex to extract mesh
+  auto hexhex_res = HexHex::extractHexMesh(tetmesh, hf_igm, config);
+  if (hexhex_res.success) {
+      // HexHex was successful :D
+      hexmesh = std::move(hexhex_res.hex_mesh);
+  }
+  else
   {
-    OpenVolumeMesh::IO::FileManager fm;
-    HexEx::HexahedralMesh sub_mesh;
-    create_sub_hexmesh(hexmesh, sub_mesh);
-    auto sub_mesh_name = args.outFileName.substr(0, args.outFileName.size() - 7) + "sub_hex.ovm";
-    fm.writeFile(sub_mesh_name, sub_mesh);
+      // Use HexEx if HexHex fails :(
+      std::cerr << "Using HexEx for Mesh Extraction..." << std::endl;
+
+      HexEx::HexExtractor hexExtractor(tetmesh, c_map_igm);
+
+      hexExtractor.extract();
+      hexmesh = std::make_unique<HexEx::HexahedralMesh>();
+      hexExtractor.getHexMesh(*hexmesh, true);
+  }
+
+  // Print Mesh Volumes
+  // auto hex_vol = hexmesh_volume(*hexmesh);
+  // auto tet_vol = tetmesh_volume(tetmesh);
+  // std::cout << "#####Hexmesh volume / tetmesh volume: " << hex_vol << "/" << tet_vol << " "
+  //           << hex_vol / tet_vol << std::endl;
+
+  // Save Hex Mesh
+  if (!args.outFileName.empty()) {
+      save_volume_mesh(args.outFileName, *hexmesh);
+  }
+
+  // Save piecewise linear mesh if desired
+  if (hexhex_res.success && !args.piecewiseLinearOutFileName.empty()) {
+      save_volume_mesh(args.piecewiseLinearOutFileName, *hexhex_res.piecewise_linear_mesh);
+  }
+
+  // Save Boundary Layer Mesh
+  if(!args.subHexOutFileName.empty()) {
+      HexHex::HexahedralMesh boundary_mesh;
+      create_sub_hexmesh(*hexmesh, boundary_mesh);
+      save_volume_mesh(args.subHexOutFileName, boundary_mesh);
   }
 }
 
