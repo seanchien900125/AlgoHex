@@ -22,6 +22,8 @@
 
 #include <AlgoHex/Stopwatches.hh>
 
+#include <HexHex/HexHex.hh>
+
 
 namespace AlgoHex
 {

@@ -38,6 +38,16 @@ if(NOT TARGET HexEx)
     FetchContent_MakeAvailable(hexex)
 endif()
 
+if(NOT TARGET HexHex)
+    FetchContent_Declare(hexhex
+        GIT_REPOSITORY https://github.com/cgg-bern/libHexHex.git
+        GIT_TAG main
+        SOURCE_DIR "${EXTERNAL_DIR}/libHexHex"
+        )
+    FetchContent_MakeAvailable(hexhex)
+    add_library(HexHex::HexHex ALIAS HexHex)
+endif()
+
 if(NOT TARGET Eigen3::Eigen)
     FetchContent_Declare(eigen
         URL https://gitlab.com/libeigen/eigen/-/archive/5.0.0/eigen-5.0.0.tar.bz2
