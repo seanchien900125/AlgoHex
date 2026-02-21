@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
   app.add_option("-i", args.inFileName, "Input tetrahedral mesh in .ovm/.vtk format (optional).");
   app.add_option("-o", args.outFileName,
-                 "Output hexhedral mesh in .ovm format (optional, default: *_inFileName +'_hex'+'.ovm').");
+                 "Output hexhedral mesh in .ovm(b) format (optional, default: *_inFileName +'_hex'+'.ovm').");
   app.add_option("--vertex-quaternion-out-path", args.vertexQtOutFileName,
                  "Save vertex quaternions in .qtn format (optional).");
   app.add_option("--refined-mesh-in-path", args.rfInFileName, "Load refined mesh in .ovm format (optional).");
@@ -136,7 +136,9 @@ int main(int argc, char *argv[])
   app.add_option("--animation-out-path", args.animationOutFileName,
                  "Save the singularity graph development during the locally meshable field generation in .ovm format (optional).");
   app.add_option("--sub-hexmesh-out-path", args.subHexOutFileName,
-                 "Save the boundary layer of the output hex mesh in .ovm format (optional).");
+                 "Save the boundary layer of the output hex mesh in .ovm(b) format (optional).");
+  app.add_option("--piecewiselinear-out-path", args.piecewiseLinearOutFileName,
+                 "Save the piecewise linear mesh in .ovm(b) format (optional).");
 
   try
   {

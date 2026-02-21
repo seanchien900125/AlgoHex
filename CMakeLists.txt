@@ -275,6 +275,7 @@ target_link_libraries(AlgoHex PUBLIC
         OpenVolumeMesh::OpenVolumeMesh
         CoMISo::CoMISo
         HexEx::HexEx
+        HexHex::HexHex
         Eigen3::Eigen
         GMM::GMM
         QGP3D::QGP3D

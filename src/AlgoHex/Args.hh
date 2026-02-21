@@ -6,6 +6,7 @@
  *  All contributors are stated in CREDITS.txt.                              *
 \*===========================================================================*/
 #pragma once
+#include <string>
 
 namespace AlgoHex
 {
@@ -193,6 +194,9 @@ struct Args
 
   // Save the boundary layer of the output hex mesh
   std::string subHexOutFileName;
+
+  // Save the piecewise linear mesh
+  std::string piecewiseLinearOutFileName;
 };
 
 //=============================================================================
