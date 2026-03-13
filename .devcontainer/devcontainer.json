@@ -1,0 +1,33 @@
+{
+  "name": "AlgoHex Dev",
+  "build": {
+    "context": "..",
+    "dockerfile": "../docker/Dockerfile-dev"
+  },
+  "workspaceFolder": "/AlgoHex",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/AlgoHex,type=bind,consistency=cached",
+  "containerEnv": {
+    "CoinUtils_DIR": "/opt/coin-or",
+    "IPOPT_HOME": "/opt/coin-or",
+    "CBC_DIR": "/opt/coin-or",
+    "CLP_DIR": "/opt/coin-or"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "github.copilot",
+        "github.copilot-chat"
+      ],
+      "settings": {
+        "cmake.buildDirectory": "${workspaceFolder}/build",
+        "cmake.configureSettings": {
+          "BONMIN_ROOT_DIR": "/opt/coin-or"
+        }
+      }
+    }
+  },
+  "remoteUser": "root"
+}
