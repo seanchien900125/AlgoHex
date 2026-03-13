@@ -69,6 +69,11 @@ Example:
 ```
 podman build --memory 64G -t algohex .
 podman run --rm --memory 64G --volume .:/work algohex HexMeshing -i /work/demo/HexMeshing/cylinder.ovm -o /work/demo/HexMeshing/cylinder_hex.ovm 2>&1 | tee cyl.log
+
+or 
+
+docker build --memory 64G -t algohex .
+docker run --rm --memory 64G --volume .:/work algohex HexMeshing -i /work/demo/HexMeshing/cylinder.ovm -o /work/demo/HexMeshing/cylinder_hex.ovm 2>&1 | tee cyl.log
 ```
 **Note:** Compiling (and running) AlgoHex requires non-trivial amounts of memory. If you are using Docker/Podman on a non-Linux platform, where a VM is created to run Linux containers, you may have to increase the memory available to the VM (e.g. podman machine). For podman, this can be accomplished by stopping and deleiting the default machine (if it exists), and creating a new one using `podman machine init --memory 16384 --now`.
 
@@ -85,4 +90,44 @@ A command-line executable is provided, which reads a tetrahedral mesh and output
 Two modes of the hexahedral meshing pipeline are available in AlgoHex. The default mode includes all four major components of frame field based hexahedral meshing pipeline, while the mode `--hexme-pipeline` comprises only a subset as described in [HexMe](https://www.algohex.eu/publications/hex-me-if-you-can/).
 For more information on the usage, please execute `./Build/bin/HexMeshing -h`.
 
+---
 
+## Development with VS Code Dev Container
+
+A [Dev Container](https://containers.dev/) configuration is provided for a consistent, ready-to-use development environment inside VS Code.
+
+### Prerequisites
+
+- Docker
+- [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+
+### Getting Started
+
+1. Open the project folder in VS Code.
+2. When prompted, click **"Reopen in Container"**, or open the Command Palette (`Ctrl+Shift+P`) and run **"Dev Containers: Reopen in Container"**.
+3. VS Code will build the development image from `docker/Dockerfile-dev` and start the container.
+
+### What's Included
+
+- **Workspace** is mounted at `/AlgoHex` inside the container.
+- **Coin-OR** solver libraries (IPOPT, Bonmin, CBC, CLP) are pre-installed under `/opt/coin-or` and exposed via environment variables (`CoinUtils_DIR`, `IPOPT_HOME`, `CBC_DIR`, `CLP_DIR`).
+- **CMake build directory** is automatically set to `${workspaceFolder}/build`.
+- **Bonmin** root is configured via `BONMIN_ROOT_DIR=/opt/coin-or`.
+- The following VS Code extensions are installed automatically:
+  - **C/C++** (`ms-vscode.cpptools`)
+  - **CMake Tools** (`ms-vscode.cmake-tools`)
+  - **CMake** syntax highlighting (`twxs.cmake`)
+  - **GitHub Copilot** and **GitHub Copilot Chat**
+
+### Building Inside the Container
+
+Once inside the container, use the `build.sh` script in the termeinal:
+
+```bash
+cd /AlgoHex
+./build.sh
+```
+
+The compiled binaries will be placed in `build/Build/bin/`.
+
+---
