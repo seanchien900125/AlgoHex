@@ -1,6 +1,6 @@
-FROM docker.io/debian:trixie-20251117 as debian-base
+FROM docker.io/ubuntu:24.04 as ubuntu-base
 
-FROM debian-base as base-packages
+FROM ubuntu-base as base-packages
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -27,7 +27,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gfortran \
     dos2unix \
     vim \
-    tmux
+    tmux \
+    libx11-dev \
+    libxrandr-dev \
+    libxinerama-dev \
+    libxcursor-dev \
+    libxi-dev
 
 # Currently (2025-12-02) unsuitable without hacks:
 # coinor-libipopt-dev
@@ -49,4 +54,12 @@ RUN cd /usr/src/coin-or && ./coinbrew build Bonmin@master --verbosity 2 --skip-u
 
 RUN ln -s /opt/coin-or/include/coin-or /opt/coin-or/include/coin
 
-COPY . /app
+# build ovm.io
+RUN git clone --recurse-submodules https://github.com/LIHPC-Computational-Geometry/ovm.io.git /usr/src/ovm.io
+
+RUN cmake -S /usr/src/ovm.io -B /usr/src/ovm.io/build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_C_FLAGS="-Wno-error=implicit-int" \
+        -G Ninja && \
+    ninja -C /usr/src/ovm.io/build && \
+    cp /usr/src/ovm.io/build/ovm.io /usr/local/bin/ovm.io

@@ -17,7 +17,6 @@
       "extensions": [
         "ms-vscode.cpptools",
         "ms-vscode.cmake-tools",
-        "twxs.cmake",
         "github.copilot",
         "github.copilot-chat"
       ],
