@@ -182,7 +182,7 @@ private:
 public:
   bool is_locally_meshable(const VH _vh, const bool _verbose = false) const;
 
-  bool is_locally_meshable(const VH _vh, TetMesh &_export_tmesh, const bool _verbose = false) const;
+  bool is_locally_meshable(const VH _vh, TetMesh &_export_tmesh, const bool _verbose = false, const bool with_optimized = true) const;
 
 private:
   void export_local_configuration(TetMesh &tetmesh, const std::vector<CH> &_chv, const std::vector<EH> &_invalid_edges,

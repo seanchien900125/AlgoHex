@@ -116,8 +116,8 @@ public:
     json_data_["non-meshable edges"] = n - n_meshable;
     json_data_["all edges"] = n;
     json_data_["feature edges"] = n_on_feature_edge - n_on_feature_edge_meshable;
-    json_data_["complex singular edges"] = n_complex_singular_edges();
-    json_data_["singular edges"] = n_singular_edges();
+    json_data_["n complex singular edges"] = n_complex_singular_edges();
+    json_data_["n singular edges"] = n_singular_edges();
     // return percentage of meshable vertices
     return double(n_meshable) / double(n);
   }

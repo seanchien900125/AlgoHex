@@ -76,6 +76,46 @@ public:
     return feature_edges;
   }
 
+  std::vector<double> compute_dihedral_angles()
+  {
+    std::vector<double> dihedral_angles;
+
+    /// if there is exactly one boundary halfface adjacent to `heh`, return its handle,
+    /// otherwise InvalidHalfFaceHandle.
+    auto one_incident_boundary_halfface = [this](const HEH heh) -> HFH {
+      HFH res = MeshT::InvalidHalfFaceHandle;
+      for (const auto hfh: mesh_.halfedge_halffaces(heh))
+      {
+        if (!mesh_.is_boundary(hfh))
+          continue;
+        if (res.is_valid())
+        { // more than one
+          return MeshT::InvalidHalfFaceHandle;
+        }
+        res = hfh;
+      }
+      return res;
+    };
+
+    for (const auto &eh: mesh_.edges())
+    {
+      if (!mesh_.is_boundary(eh))
+        continue;
+      HFH hfh0 = one_incident_boundary_halfface(mesh_.halfedge_handle(eh, 0));
+      if (!hfh0.is_valid()) continue;
+      HFH hfh1 = one_incident_boundary_halfface(mesh_.halfedge_handle(eh, 1));
+      if (!hfh1.is_valid()) continue;
+
+      auto n0 = normals_[hfh0];
+      auto n1 = normals_[hfh1];
+
+      double two_face_nomal_vec_radians = std::acos(std::clamp(n0.dot(n1), -1., 1.));
+      double dihedral_angle = 180. - (two_face_nomal_vec_radians * 180. / M_PI);  // form normal vectors to dihedral angle in degrees
+      dihedral_angles.push_back(dihedral_angle);
+    }
+    return dihedral_angles;
+  }
+
 private:
   MeshT &mesh_;
   FaceNormalCache<MeshT> &normals_;

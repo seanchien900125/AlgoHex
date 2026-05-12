@@ -308,7 +308,7 @@ public:
     return valid;
   }
 
-  bool is_locally_meshable(const VH _vh, const bool _align_sg = false, const int _n_split = 1)
+  bool is_locally_meshable(const VH _vh, const bool _align_sg = false, const int _n_split = 1, const bool with_refinement = true)
   {
     //store old quaterions
     std::map<CH, Quaternion> old_cell_quaternions;
@@ -343,68 +343,71 @@ public:
       // remove all constraints that are not incident to vh_or
       remove_locally_irrelevant_constraints(onering, vh_or);
 
-      valid = check_parameterization(onering, vh_or, _vh.idx(), save_locally_non_meshable_);
+      valid = check_parameterization(onering, vh_or, _vh.idx(), save_locally_non_meshable_, with_refinement);
 
-      // alwasy verbose for non-meshable!
-      if (!valid && !verbose_)
+      if (with_refinement)
       {
-        verbose_ = true;
-        check_parameterization(onering, vh_or, _vh.idx(), false);
+        // alwasy verbose for non-meshable!
+        if (!valid && !verbose_)
+        {
+          verbose_ = true;
+          check_parameterization(onering, vh_or, _vh.idx(), false);
+          verbose_ = false;
+        }
+
+        if (!valid)
+        {
+          dp.get_halfedge_axis_in_cell_in_onering_mesh();
+          optimize_onering_mesh(onering, vh_or, 5);
+          check_parameterization(onering, vh_or, _vh.idx(), false);
+          verbose_ = true;
+        }
+
+        int n_iter = 0;
+  //              {
+  //                // write file
+  //                std::stringstream ss;
+  //                ss << "mesh_split_" << n_iter << ".ovm";
+  //
+  //                OpenVolumeMesh::IO::FileManager fm;
+  //                fm.writeFile(ss.str(), onering);
+  //              }
+
+        while (!valid && n_iter < _n_split)
+        {
+          ++n_iter;
+          std::cerr << "################ Refinement Iter " << n_iter << " with #vertices before = "
+                    << onering.n_vertices();
+          split_edges(onering, vh_or);
+          normalize_one_ring_mesh(onering, vh_or);
+
+  //                // write file
+  //                  std::stringstream ss;
+  //                  ss << "mesh_split_" << n_iter << ".ovm";
+  //
+  //                  OpenVolumeMesh::IO::FileManager fm;
+  //                  fm.writeFile(ss.str(), onering);
+
+          std::cerr << " and #vertices after = " << onering.n_vertices() << std::endl;
+          valid = check_parameterization(onering, vh_or, _vh.idx(), false);
+        }
         verbose_ = false;
+
+
+  //                if (!valid) {
+  //                    dp.get_halfedge_axis_in_cell_in_onering_mesh();
+  //
+  //                    n_opt_++;
+  //                    optimize_onering_mesh(onering, vh_or, 10);
+  //                    valid = check_parameterization(onering, vh_or, _vh.idx(), true);
+  //
+  //                    std::cerr << " is valid? " << valid << std::endl;
+  //                    if (!valid)
+  //                        check_mesh_dihedral_angle(onering);
+  //                    else
+  //                        n_fixed_++;
+  //                }
       }
-
-      if (!valid)
-      {
-        dp.get_halfedge_axis_in_cell_in_onering_mesh();
-        optimize_onering_mesh(onering, vh_or, 5);
-        check_parameterization(onering, vh_or, _vh.idx(), false);
-        verbose_ = true;
-      }
-
-      int n_iter = 0;
-//              {
-//                // write file
-//                std::stringstream ss;
-//                ss << "mesh_split_" << n_iter << ".ovm";
-//
-//                OpenVolumeMesh::IO::FileManager fm;
-//                fm.writeFile(ss.str(), onering);
-//              }
-
-      while (!valid && n_iter < _n_split)
-      {
-        ++n_iter;
-        std::cerr << "################ Refinement Iter " << n_iter << " with #vertices before = "
-                  << onering.n_vertices();
-        split_edges(onering, vh_or);
-        normalize_one_ring_mesh(onering, vh_or);
-
-//                // write file
-//                  std::stringstream ss;
-//                  ss << "mesh_split_" << n_iter << ".ovm";
-//
-//                  OpenVolumeMesh::IO::FileManager fm;
-//                  fm.writeFile(ss.str(), onering);
-
-        std::cerr << " and #vertices after = " << onering.n_vertices() << std::endl;
-        valid = check_parameterization(onering, vh_or, _vh.idx(), false);
-      }
-      verbose_ = false;
-
-
-//                if (!valid) {
-//                    dp.get_halfedge_axis_in_cell_in_onering_mesh();
-//
-//                    n_opt_++;
-//                    optimize_onering_mesh(onering, vh_or, 10);
-//                    valid = check_parameterization(onering, vh_or, _vh.idx(), true);
-//
-//                    std::cerr << " is valid? " << valid << std::endl;
-//                    if (!valid)
-//                        check_mesh_dihedral_angle(onering);
-//                    else
-//                        n_fixed_++;
-//                }
     }
 
     if (_align_sg)
@@ -417,7 +420,8 @@ public:
     return valid;
   }
 
-  bool check_parameterization(MeshT &_mesh, const VH _vh, const int _orig_vh_id, bool _save_config)
+  bool check_parameterization(MeshT &_mesh, const VH _vh, const int _orig_vh_id, bool _save_config,
+                              const bool _with_optimized = true)
   {
     //check parameterization
     AlgoHex::FrameFieldOptimizer3DT<MeshT> ffopt(_mesh);
@@ -429,7 +433,7 @@ public:
     }
 
     MeshT export_mesh;
-    bool is_valid = ffopt.is_locally_meshable(_vh, export_mesh, verbose_);
+    bool is_valid = ffopt.is_locally_meshable(_vh, export_mesh, verbose_, _with_optimized);
 
     if (_save_config && !is_valid && save_locally_non_meshable_)
     {

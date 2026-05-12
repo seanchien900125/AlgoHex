@@ -309,6 +309,7 @@ option(ALGOHEX_BUILD_DEMO "Build AlgoHex demo commandline tool" ${ALGOHEX_IS_ROO
 if (ALGOHEX_BUILD_DEMO)
     add_subdirectory(demo/HexMeshing)
     add_subdirectory(demo/LocalMeshabilityCheck)
+    add_subdirectory(demo/MeshabilityEvaluator)
 endif ()
 
 option(ALGOHEX_BUILD_TESTS "Build AlgoHex unit tests" ${ALGOHEX_IS_ROOT})
