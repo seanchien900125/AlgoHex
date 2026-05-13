@@ -10,8 +10,13 @@
     "CoinUtils_DIR": "/opt/coin-or",
     "IPOPT_HOME": "/opt/coin-or",
     "CBC_DIR": "/opt/coin-or",
-    "CLP_DIR": "/opt/coin-or"
+    "CLP_DIR": "/opt/coin-or",
+    "DISPLAY": "${localEnv:DISPLAY}"
   },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.claude,target=/root/.claude,type=bind"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
@@ -28,5 +33,6 @@
       }
     }
   },
-  "remoteUser": "root"
+  "remoteUser": "root",
+  "initializeCommand": "[ -n \"$DISPLAY\" ] && xhost +local:docker || true"
 }

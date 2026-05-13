@@ -32,7 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrandr-dev \
     libxinerama-dev \
     libxcursor-dev \
-    libxi-dev
+    libxi-dev \
+    python3-meshio
 
 # Currently (2025-12-02) unsuitable without hacks:
 # coinor-libipopt-dev
