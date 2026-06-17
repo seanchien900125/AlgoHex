@@ -2019,7 +2019,7 @@ is_locally_meshable(const VH _vh, const bool _verbose) const
 template<class TetMeshT>
 bool
 FrameFieldOptimizer3DT<TetMeshT>::
-is_locally_meshable(const VH _vh, TetMesh &_export_tmesh, const bool _verbose) const
+is_locally_meshable(const VH _vh, TetMesh &_export_tmesh, const bool _verbose, const bool with_optimized) const
 {
   if (_verbose) std::cerr << "check vertex " << _vh.idx() << std::endl;
 
@@ -2727,12 +2727,6 @@ is_locally_meshable(const VH _vh, TetMesh &_export_tmesh, const bool _verbose) c
 //    Eigen::SparseQR<SMatXd,Eigen::COLAMDOrdering<int> > sqr(A);
 //    std::cerr << "rank(A) = " << sqr.rank() << std::endl;
 //  }
-
-  // make integrability constraints linearly independent
-  COMISO::ConstraintTools::remove_dependent_linear_constraints_only_linear_equality(constraints);
-
-  // ############# 3. optimize
-
   // print energies at beginning
   if (_verbose)
   {
@@ -2748,37 +2742,44 @@ is_locally_meshable(const VH _vh, TetMesh &_export_tmesh, const bool _verbose) c
   // store initial solution
   std::vector<double> x0 = fe_problem.x();
 
-//  COMISO::AugmentedLagrangianMethod alm(1e3, 1e-6, 1e-6, 12);
-//  alm.set_silent(true);
-////  std::cerr << "#constraints: " << constraints.size() << std::endl;
-////  std::cerr << "#linear constraints: " << linear_constraints.size() << std::endl;
-//  alm.solve_experimental(&fe_problem, constraints, linear_constraints);
-
-  COMISO::NewtonSolver ns(1e-6, 1e-9, 2000);
-//  ns.set_prescribed_constraint_regularization(-1e-9);
-//  ns.set_prescribed_hessian_regularization(1e-9);
-//  ns.solve_infeasible_start(&fe_problem, linear_constraints);
-  auto cv = ns.solve_infeasible_start(&fe_problem, constraints);
-//  try {
-//    COMISO::IPOPTSolver ipsol;
-////    ipsol.set_ipopt_option("print_level", 0);
-//    ipsol.set_max_iterations(5000);
-//    ipsol.solve(&fe_problem, constraints);
-//  }
-//  catch (...)
-//  {
-//    std::cerr << "ERROR: IPOPT threw an exception!!!!!" << std::endl;
-//  }
-
-  if (_verbose)
+  // ############# 3. optimize
+  if (with_optimized)
   {
-    std::cerr << "--- final energies complete ---\n";
-    fe_problem_complete.x() = fe_problem.x();
-    fe_problem_complete.print_objectives();
+    // make integrability constraints linearly independent
+    COMISO::ConstraintTools::remove_dependent_linear_constraints_only_linear_equality(constraints);
 
-    std::cerr << "--- final energies selected ---\n";
-    fe_problem.print_objectives();
-    std::cerr << "-------------------------------\n";
+  //  COMISO::AugmentedLagrangianMethod alm(1e3, 1e-6, 1e-6, 12);
+  //  alm.set_silent(true);
+  ////  std::cerr << "#constraints: " << constraints.size() << std::endl;
+  ////  std::cerr << "#linear constraints: " << linear_constraints.size() << std::endl;
+  //  alm.solve_experimental(&fe_problem, constraints, linear_constraints);
+
+    COMISO::NewtonSolver ns(1e-6, 1e-9, 2000);
+  //  ns.set_prescribed_constraint_regularization(-1e-9);
+  //  ns.set_prescribed_hessian_regularization(1e-9);
+  //  ns.solve_infeasible_start(&fe_problem, linear_constraints);
+    auto cv = ns.solve_infeasible_start(&fe_problem, constraints);
+  //  try {
+  //    COMISO::IPOPTSolver ipsol;
+  ////    ipsol.set_ipopt_option("print_level", 0);
+  //    ipsol.set_max_iterations(5000);
+  //    ipsol.solve(&fe_problem, constraints);
+  //  }
+  //  catch (...)
+  //  {
+  //    std::cerr << "ERROR: IPOPT threw an exception!!!!!" << std::endl;
+  //  }
+
+    if (_verbose)
+    {
+      std::cerr << "--- final energies complete ---\n";
+      fe_problem_complete.x() = fe_problem.x();
+      fe_problem_complete.print_objectives();
+
+      std::cerr << "--- final energies selected ---\n";
+      fe_problem.print_objectives();
+      std::cerr << "-------------------------------\n";
+    }
   }
   // ############# 4. analyze result
 

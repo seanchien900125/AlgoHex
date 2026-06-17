@@ -84,6 +84,8 @@ public:
 
   void save_vertex_quaternion(const std::string &_filename) const;
 
+  double compute_energy() const;
+
   void print_timings() const;
 
 private:
@@ -94,8 +96,6 @@ private:
   void add_full_constraints(double penalty);
 
   void add_local_optim_constraints(const int _num_cv, const double _penalty) const;
-
-  double compute_energy() const;
 
   void cache_constrained_9d_coefficients();
 
