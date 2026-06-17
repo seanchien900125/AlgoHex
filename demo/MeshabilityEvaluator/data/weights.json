@@ -1,0 +1,44 @@
+[
+    {
+        "feature": "NumberSingularEdges",
+        "success_mean": 898.6666666666666,
+        "failure_mean": 6067.75,
+        "direction": "lower_better",
+        "weight": 0.18588188854302656
+    },
+    {
+        "feature": "NumberZipperNodes",
+        "success_mean": 23.166666666666668,
+        "failure_mean": 167.5,
+        "direction": "lower_better",
+        "weight": 0.18224545063204659
+    },
+    {
+        "feature": "NumberFeatureEdges",
+        "success_mean": 531.3333333333334,
+        "failure_mean": 4543.75,
+        "direction": "lower_better",
+        "weight": 0.18076270611104037
+    },
+    {
+        "feature": "PercentageMeshableEdges",
+        "success_mean": 1.0,
+        "failure_mean": 0.9999859358417622,
+        "direction": "higher_better",
+        "weight": 0.17552430477224365
+    },
+    {
+        "feature": "NumberSingularNodes",
+        "success_mean": 60.166666666666664,
+        "failure_mean": 584,
+        "direction": "lower_better",
+        "weight": 0.15176017025050656
+    },
+    {
+        "feature": "LengthComplexSingularEdges",
+        "success_mean": 0.0,
+        "failure_mean": 14.981830682872998,
+        "direction": "lower_better",
+        "weight": 0.12382547969113629
+    }
+]
